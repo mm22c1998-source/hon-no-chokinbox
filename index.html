@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f8f3ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ほんの貯金箱">
+<title>ほんの貯金箱</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#f8f3ec;
+  color:#514940;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+  overflow-x:hidden;
+}
+header{
+  padding:calc(env(safe-area-inset-top) + 20px) 20px 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+h1{
+  margin:0;
+  font-size:24px;
+  font-weight:700;
+}
+.count{
+  font-size:13px;
+  background:#fff;
+  padding:7px 12px;
+  border-radius:20px;
+}
+main{padding:0 16px 110px}
+
+.box{
+  height:calc(100vh - 180px);
+  min-height:520px;
+  position:relative;
+  overflow:hidden;
+  border-radius:30px;
+  background:linear-gradient(#fffaf4,#f0e7db);
+  box-shadow:inset 0 0 0 1px rgba(100,80,60,.08);
+}
+
+.empty{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color:#9b9085;
+  font-size:14px;
+  line-height:1.9;
+  pointer-events:none;
+}
+
+.books{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:16px;
+  height:100%;
+  pointer-events:none;
+}
+
+.book{
+  position:absolute;
+  width:88px;
+  height:126px;
+  border-radius:5px;
+  overflow:hidden;
+  box-shadow:0 5px 12px rgba(70,50,30,.18);
+  cursor:pointer;
+  pointer-events:auto;
+  transition:transform .18s ease;
+  background:#ddd;
+}
+.book img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.book:hover{transform:translateY(-5px) rotate(0deg)!important}
+
+.shake .book{
+  animation:shake .55s ease-in-out infinite;
+}
+@keyframes shake{
+  0%{transform:translate(0,0) rotate(-4deg)}
+  25%{transform:translate(-5px,3px) rotate(5deg)}
+  50%{transform:translate(5px,-2px) rotate(-6deg)}
+  75%{transform:translate(-3px,2px) rotate(5deg)}
+  100%{transform:translate(0,0) rotate(-4deg)}
+}
+
+.bottom{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  padding:10px 16px calc(env(safe-area-inset-bottom) + 10px);
+  background:rgba(248,243,236,.92);
+  backdrop-filter:blur(15px);
+  z-index:20;
+}
+.add{
+  width:100%;
+  border:0;
+  border-radius:18px;
+  padding:15px;
+  background:#514940;
+  color:white;
+  font-size:16px;
+  font-weight:700;
+}
+button{font-family:inherit}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(40,32,25,.42);
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  z-index:50;
+}
+.modal.show{display:flex}
+.sheet{
+  width:100%;
+  max-width:600px;
+  max-height:90vh;
+  overflow:auto;
+  background:#fffaf5;
+  border-radius:28px 28px 0 0;
+  padding:22px 20px calc(env(safe-area-inset-bottom) + 25px);
+}
+.handle{
+  width:42px;height:5px;background:#d6cdc3;
+  border-radius:10px;margin:0 auto 20px;
+}
+.sheet h2{margin:0 0 18px;font-size:21px}
+label{
+  display:block;
+  margin:15px 0 7px;
+  font-size:13px;
+  font-weight:700;
+}
+input,textarea{
+  width:100%;
+  border:1px solid #ddd2c6;
+  border-radius:13px;
+  padding:12px;
+  background:white;
+  color:#514940;
+  font-size:15px;
+  font-family:inherit;
+}
+textarea{min-height:110px;resize:vertical}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.primary{
+  margin-top:18px;
+  width:100%;
+  border:0;
+  border-radius:15px;
+  padding:14px;
+  background:#514940;
+  color:white;
+  font-size:15px;
+  font-weight:700;
+}
+.secondary{
+  margin-top:9px;
+  width:100%;
+  border:1px solid #ddd2c6;
+  border-radius:15px;
+  padding:13px;
+  background:white;
+  color:#514940;
+}
+.delete{
+  margin-top:15px;
+  width:100%;
+  border:0;
+  background:none;
+  color:#b56c62;
+  padding:10px;
+}
+.coverPreview{
+  width:80px;height:110px;
+  object-fit:cover;
+  border-radius:5px;
+  display:none;
+  margin:8px 0;
+}
+.searchResults{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:12px;
+}
+.result{
+  border:1px solid #ddd2c6;
+  border-radius:12px;
+  overflow:hidden;
+  background:white;
+  text-align:left;
+}
+.result img{
+  width:100%;
+  aspect-ratio:2/3;
+  object-fit:cover;
+}
+.result span{
+  display:block;
+  padding:6px;
+  font-size:11px;
+  line-height:1.4;
+}
+.small{
+  font-size:12px;
+  color:#91867b;
+  line-height:1.7;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>ほんの貯金箱 📚</h1>
+  <div class="count" id="count">0冊</div>
+</header>
+
+<main>
+  <div class="box" id="box">
+    <div class="empty" id="empty">
+      読んだ本を貯めていこう。<br>
+      いっぱいになるほど、あなたの読書が見えるよ。
+    </div>
+    <div class="books" id="books"></div>
+  </div>
+</main>
+
+<div class="bottom">
+  <button class="add" onclick="openAdd()">＋ 本を追加する</button>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <div class="handle"></div>
+
+    <h2 id="modalTitle">本を追加</h2>
+
+    <label>本を検索</label>
+    <div class="row">
+      <input id="searchInput" placeholder="タイトル・著者名">
+      <button class="secondary" style="margin:0;flex:0 0 90px" onclick="searchBook()">検索</button>
+    </div>
+
+    <div id="searchResults" class="searchResults"></div>
+
+    <label>タイトル</label>
+    <input id="title" placeholder="本のタイトル">
+
+    <label>著者</label>
+    <input id="author" placeholder="著者名">
+
+    <label>表紙</label>
+    <input type="file" id="coverFile" accept="image/*">
+    <img id="coverPreview" class="coverPreview">
+
+    <label>読んだ日</label>
+    <input type="date" id="date">
+
+    <label>感想・メモ</label>
+    <textarea id="memo" placeholder="この本を読んで思ったこと…"></textarea>
+
+    <label>自由な記録</label>
+    <input id="customLabel" placeholder="例：好きな言葉">
+    <input id="customValue" style="margin-top:7px" placeholder="例：〇〇という言葉">
+
+    <button class="primary" onclick="saveBook()">保存する</button>
+    <button class="secondary" onclick="closeModal()">キャンセル</button>
+    <button class="delete" id="deleteBtn" onclick="deleteBook()" style="display:none">この本を削除</button>
+  </div>
+</div>
+
+<script>
+let books = JSON.parse(localStorage.getItem("hon_no_chokinbox") || "[]");
+let editingId = null;
+
+const booksEl = document.getElementById("books");
+const emptyEl = document.getElementById("empty");
+const countEl = document.getElementById("count");
+const modal = document.getElementById("modal");
+
+function saveData(){
+  localStorage.setItem("hon_no_chokinbox", JSON.stringify(books));
+}
+
+function render(){
+  booksEl.innerHTML="";
+  countEl.textContent=books.length+"冊";
+  emptyEl.style.display=books.length ? "none":"flex";
+
+  books.forEach((book,i)=>{
+    const el=document.createElement("div");
+    el.className="book";
+
+    const angle=((i*37)%11)-5;
+    const x=(i*83)%82;
+    const y=(i*71)%78;
+
+    el.style.left=x+"%";
+    el.style.bottom=y+"px";
+    el.style.transform=`rotate(${angle}deg)`;
+    el.style.zIndex=i+1;
+
+    el.innerHTML=`<img src="${book.cover || placeholder(book.title)}" alt="">`;
+    el.onclick=()=>openEdit(book.id);
+    booksEl.appendChild(el);
+  });
+}
+
+function placeholder(title){
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300">
+  <rect width="100%" height="100%" fill="#d8cbbd"/>
+  <text x="50%" y="48%" text-anchor="middle" font-size="20" fill="#6c5e51">${escapeHtml(title||"本")}</text>
+  </svg>`;
+  return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
+}
+
+function escapeHtml(str){
+  return String(str||"").replace(/[&<>"']/g,m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",
+    '"':"&quot;","'":"&#039;"
+  }[m]));
+}
+
+function openAdd(){
+  editingId=null;
+  document.getElementById("modalTitle").textContent="本を追加";
+  document.getElementById("deleteBtn").style.display="none";
+  clearForm();
+  modal.classList.add("show");
+}
+
+function openEdit(id){
+  const b=books.find(x=>x.id===id);
+  if(!b)return;
+
+  editingId=id;
+  document.getElementById("modalTitle").textContent="読書記録";
+  document.getElementById("title").value=b.title||"";
+  document.getElementById("author").value=b.author||"";
+  document.getElementById("date").value=b.date||"";
+  document.getElementById("memo").value=b.memo||"";
+  document.getElementById("customLabel").value=b.customLabel||"";
+  document.getElementById("customValue").value=b.customValue||"";
+
+  const preview=document.getElementById("coverPreview");
+  if(b.cover){
+    preview.src=b.cover;
+    preview.style.display="block";
+  }else{
+    preview.style.display="none";
+  }
+
+  document.getElementById("deleteBtn").style.display="block";
+  modal.classList.add("show");
+}
+
+function clearForm(){
+  ["title","author","date","memo","customLabel","customValue","searchInput"]
+  .forEach(id=>document.getElementById(id).value="");
+
+  document.getElementById("searchResults").innerHTML="";
+  document.getElementById("coverFile").value="";
+  document.getElementById("coverPreview").style.display="none";
+  document.getElementById("coverPreview").src="";
+}
+
+function closeModal(){
+  modal.classList.remove("show");
+}
+
+document.getElementById("coverFile").addEventListener("change",e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const p=document.getElementById("coverPreview");
+    p.src=reader.result;
+    p.style.display="block";
+  };
+  reader.readAsDataURL(file);
+});
+
+function saveBook(){
+  const title=document.getElementById("title").value.trim();
+  if(!title){
+    alert("タイトルを入力してね");
+    return;
+  }
+
+  const preview=document.getElementById("coverPreview");
+
+  const data={
+    id:editingId || Date.now(),
+    title,
+    author:document.getElementById("author").value.trim(),
+    cover:preview.src && preview.style.display!=="none" ? preview.src : "",
+    date:document.getElementById("date").value,
+    memo:document.getElementById("memo").value,
+    customLabel:document.getElementById("customLabel").value,
+    customValue:document.getElementById("customValue").value
+  };
+
+  if(editingId){
+    books=books.map(b=>b.id===editingId?data:b);
+  }else{
+    books.push(data);
+  }
+
+  saveData();
+  render();
+  closeModal();
+}
+
+function deleteBook(){
+  if(!editingId)return;
+
+  if(confirm("この読書記録を削除する？")){
+    books=books.filter(b=>b.id!==editingId);
+    saveData();
+    render();
+    closeModal();
+  }
+}
+
+async function searchBook(){
+  const q=document.getElementById("searchInput").value.trim();
+  if(!q)return;
+
+  const results=document.getElementById("searchResults");
+  results.innerHTML="検索中…";
+
+  try{
+    const res=await fetch(
+      "https://openlibrary.org/search.json?q="+encodeURIComponent(q)+"&limit=9"
+    );
+    const data=await res.json();
+
+    results.innerHTML="";
+
+    data.docs.slice(0,9).forEach(book=>{
+      const div=document.createElement("button");
+      div.className="result";
+
+      const cover=book.cover_i
+        ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
+        : placeholder(book.title);
+
+      div.innerHTML=
+        `<img src="${cover}">
+         <span>${escapeHtml(book.title||"")}</span>`;
+
+      div.onclick=()=>{
+        document.getElementById("title").value=book.title||"";
+        document.getElementById("author").value=
+          book.author_name ? book.author_name[0] : "";
+
+        const p=document.getElementById("coverPreview");
+        p.src=cover;
+        p.style.display="block";
+
+        results.innerHTML="";
+      };
+
+      results.appendChild(div);
+    });
+
+    if(!data.docs.length){
+      results.innerHTML="見つからなかったよ";
+    }
+
+  }catch(e){
+    results.innerHTML="検索できませんでした";
+  }
+}
+
+/* スマホを振ったら本がシャカシャカ */
+let lastShake=0;
+
+window.addEventListener("devicemotion",e=>{
+  const a=e.accelerationIncludingGravity;
+  if(!a)return;
+
+  const strength=Math.abs(a.x||0)+Math.abs(a.y||0)+Math.abs(a.z||0);
+
+  if(strength>28 && Date.now()-lastShake>700 && books.length){
+    lastShake=Date.now();
+    booksEl.classList.add("shake");
+
+    setTimeout(()=>{
+      booksEl.classList.remove("shake");
+      render();
+    },700);
+  }
+});
+
+/* iPhone用：モーション許可 */
+async function requestMotion(){
+  if(typeof DeviceMotionEvent!=="undefined" &&
+     typeof DeviceMotionEvent.requestPermission==="function"){
+    try{
+      const p=await DeviceMotionEvent.requestPermission();
+      if(p==="granted"){
+        alert("シャカシャカ機能を使えるようになったよ📚");
+      }
+    }catch(e){}
+  }
+}
+
+document.addEventListener("click",()=>{
+  if(!window._motionAsked){
+    window._motionAsked=true;
+    requestMotion();
+  }
+},{once:true});
+
+render();
+</script>
+
+</body>
+</html>
